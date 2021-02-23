@@ -239,7 +239,7 @@ class JobsTable(TethysGizmoOptions):
     @staticmethod
     def get_vendor_js():
         return (
-            'https://cdnjs.cloudflare.com/ajax/libs/d3/4.12.2/d3.min.js',
+            'd3/build/d3.min.js',
             'tethys_gizmos/vendor/lodash/lodash.min.js',
             'tethys_gizmos/vendor/graphlib/dist/graphlib.core.min.js',
             'tethys_gizmos/vendor/dagre/dist/dagre.core.min.js',
