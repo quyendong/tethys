@@ -58,10 +58,10 @@
       </button>
       <ul class="dropdown-menu dropdown-menu-right">
         {% if actions.run %}
-          <li class="{% if not row.actions.run %}disabled{% endif %}"><a class='dropdown-item btn-job-run' href="javascript:void(0)" data-job-id="{{ job_id }}" >Run</a></li>
+          <li class="{% if not row.actions.run %}disabled{% endif %}"><a class='dropdown-item job-action-run' href="javascript:void(0)" data-job-id="{{ job_id }}" >Run</a></li>
         {% endif %}
         {% if actions.resubmit %}
-          <li class="{% if not row.actions.resubmit %}disabled{% endif %}"><a class='dropdown-item btn-job-resubmit' href="javascript:void(0)" data-job-id="{{ job_id }}" >Resubmit</a></li>
+          <li class="{% if not row.actions.resubmit %}disabled{% endif %}"><a class='dropdown-item job-action-resubmit' href="javascript:void(0)" data-job-id="{{ job_id }}" >Resubmit</a></li>
         {% endif %}
         {% if actions.run or actions.resubmit %}
         {% if actions.logs or actions.monitor or actions.results %}
@@ -69,7 +69,7 @@
         {% endif %}
         {% endif %}
         {% if actions.logs %}
-          <li class="{% if not row.actions.logs %}disabled{% endif %}"><a class="dropdown-item {% if row.actions.logs %}btn-job-show-log" href="javascript:void(0)" data-job-id="{{ job_id }}" data-toggle="modal" data-target="#modal-dialog-jobs-table-show-log"{% else %}" href="#"{% endif %}>View Logs</a></li>
+          <li class="{% if not row.actions.logs %}disabled{% endif %}"><a class="dropdown-item {% if row.actions.logs %}job-action-show-log" href="javascript:void(0)" data-job-id="{{ job_id }}" data-toggle="modal" data-target="#modal-dialog-jobs-table-show-log"{% else %}" href="#"{% endif %}>View Logs</a></li>
         {% endif %}
         {% if actions.monitor %}
           <li class="{% if not row.actions.monitor %}disabled{% endif %}"><a class='dropdown-item' href="{% if row.actions.monitor %}{% url monitor_url job_id=job.id %}{% else %}#{% endif %}">Monitor Job</a></li>
@@ -81,10 +81,30 @@
           <li role="separator" class="divider"></li>
         {% endif %}
         {% if actions.terminate %}
-          <li class="{% if not row.actions.terminate %}disabled{% endif %}"><a class="dropdown-item {% if row.actions.terminate %}btn-job-terminate" href="javascript:void(0)" data-job-id="{{ job_id }}" data-toggle="modal" data-target="#modal-dialog-jobs-table-confirm"{% else %}" href="#"{% endif %}>Terminate</a></li>
+          <li class="{% if not row.actions.terminate %}disabled{% endif %}"><a class="dropdown-item {% if row.actions.terminate %}job-action-terminate" href="javascript:void(0)" data-job-id="{{ job_id }}" data-toggle="modal" data-target="#modal-dialog-jobs-table-confirm"{% else %}" href="#"{% endif %}>Terminate</a></li>
         {% endif %}
         {% if actions.delete %}
-          <li class="{% if not row.actions.delete %}disabled{% endif %}"><a class="dropdown-item {% if row.actions.delete %}btn-job-delete" href="javascript:void(0)" data-job-id="{{ job_id }}" data-toggle="modal" data-target="#modal-dialog-jobs-table-confirm"{% else %}" href="#"{% endif %}>Delete</a></li>
+          <li class="{% if not row.actions.delete %}disabled{% endif %}"><a class="dropdown-item {% if row.actions.delete %}job-action-delete" href="javascript:void(0)" data-job-id="{{ job_id }}" data-toggle="modal" data-target="#modal-dialog-jobs-table-confirm"{% else %}" href="#"{% endif %}>Delete</a></li>
+        {% endif %}
+        {% if row.custom_actions %}
+          <li role="separator" class="divider"></li>
+          {% for action, properties in row.custom_actions.items %}
+          <li class="{% if not properties.enabled %}disabled{% endif %}">
+            <a class="dropdown-item {% if properties.enabled %} job-action-custom{% endif %}"
+              {% if properties.enabled %}
+                href="javascript:void(0)"
+                {% if properties.modal_options %}
+                  data-toggle="modal"
+                  data-target="#modal-dialog-jobs-table-confirm"
+                {% endif %}
+              {% else %}
+                href="#"
+              {% endif %}
+                data-job-id="{{ job_id }}"
+                data-callback="{{ properties.callback }}"
+            >{{ action }}</a>
+          </li>
+          {% endfor %}
         {% endif %}
       </ul>
     </div>
