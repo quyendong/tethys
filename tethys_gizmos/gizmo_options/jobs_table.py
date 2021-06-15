@@ -13,7 +13,6 @@ import logging
 from functools import wraps
 from copy import deepcopy
 
-from tethys_cli.cli_colors import write_warning
 from tethys_compute.models import TethysJob
 from .base import TethysGizmoOptions
 from .select_input import SelectInput
@@ -233,7 +232,7 @@ class JobsTable(TethysGizmoOptions):
             A list of field values for one row.
 
         """
-        custom_actions = custom_actions or []
+        custom_actions = custom_actions or {}
         row_values = list()
         job_actions = dict()
         for attribute in job_attributes:
