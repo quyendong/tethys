@@ -122,7 +122,6 @@ def get_log_content(request, job_id, key1, key2=None):
 
 
 def update_row(request, job_id):
-    filters = []
     try:
         data = reconstruct_post_dict(request)
         job = TethysJob.objects.get_subclass(id=job_id)
@@ -156,7 +155,7 @@ def update_row(request, job_id):
             if status == 'Results-Ready':
                 status = 'Running'
 
-        row = JobsTable.get_row(job, data['column_fields'], data['custom_actions'])
+        row = JobsTable.get_row(job, data['column_fields'], data.get('custom_actions'))
         data.update({'job': job, 'job_id': job.id, 'row': row, 'job_status': status,
                      'job_statuses': statuses, 'delay_loading_status': False, 'error_message': status_msg})
         success = True
@@ -172,7 +171,7 @@ def update_row(request, job_id):
                                 {
                                     'job_id': job_id,
                                     'error_msg': user_friendly_error,
-                                    'num_cols': len(filters) if filters else 1
+                                    'num_cols': len(data.get('column_fields', [1]))
                                 })
 
     return JsonResponse({'success': success, 'status': status, 'html': html})
