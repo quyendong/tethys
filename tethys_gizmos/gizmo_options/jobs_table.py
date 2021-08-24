@@ -46,11 +46,19 @@ def add_method(cls):
 
 
 class CustomJobAction:
-    def __init__(self, label, callback, enabled_callback=None, job_type=TethysJob):
+    def __init__(self, label, callback, enabled_callback=None, confirm_message=None, job_type=TethysJob):
         self.label = label
+        self.confirm_message = confirm_message
         self.callback = self.register_callback(callback, job_type)
         if enabled_callback:
             self.register_callback(enabled_callback, job_type, self.get_enabled_callback_name(label))
+
+    @property
+    def properties(self):
+        return {
+            'callback': self.callback,
+            'confirm_message': self.confirm_message
+        }
 
     @staticmethod
     def register_callback(callback, job_type, name=None):
@@ -181,7 +189,7 @@ class JobsTable(TethysGizmoOptions):
                 action = CustomJobAction(*action)
 
             if isinstance(action, CustomJobAction):
-                self.custom_actions[action.label] = {'callback': action.callback}
+                self.custom_actions[action.label] = action.properties
 
         self.set_rows_and_columns(jobs, column_fields)
 
@@ -227,6 +235,7 @@ class JobsTable(TethysGizmoOptions):
         Args:
             job (TethysJob): An instance of a subclass of TethysJob
             job_attributes (list): a list of attribute names corresponding to the fields in the jobs table
+            custom_actions (dict): a dictionary of custom actions
 
         Returns:
             A list of field values for one row.

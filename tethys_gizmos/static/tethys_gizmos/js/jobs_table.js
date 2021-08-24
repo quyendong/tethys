@@ -4,35 +4,57 @@
  *
  *****************************************************************************/
 function add_message(message, message_type='danger'){
+  if(message_type == 'danger'){
+    message = '<strong>Error!</strong> ' + message;
+  }
   var alert_html = '<div class="alert alert-' + message_type + ' alert-dismissible" role="alert">' +
                       '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
-                      '<strong>Error!</strong> ' + message +
+                       message +
                   '</div>';
   $('#jobs-table-messages').append(alert_html);
 }
 
-function bind_custom_action(action){
-     var job_id = $(action).data('job-id');
-     var callback = $(action).data('callback')
-     $(action).on('click', function () {
+const status_html =
+'<div class="progress" style="margin-bottom: 0;">' +
+    '<div class="progress-bar progress-bar-warning progress-bar-striped active" role="progressbar" title="Submitted" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">' +
+        '<span class="sr-only">100% Complete</span>' +
+    '</div>' +
+'</div>';
 
-        var action_url = '/developer/gizmos/ajax/' + job_id + '/custom-action/' + callback;
-        $.ajax({
-            url: action_url
-        }).done(function (json) {
-            status_html =
-            '<div class="progress" style="margin-bottom: 0;">' +
-                '<div class="progress-bar progress-bar-warning progress-bar-striped active" role="progressbar" title="Submitted" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">' +
-                    '<span class="sr-only">100% Complete</span>' +
-                '</div>' +
-            '</div>'
-            $(action).parent().html(status_html);
-            update_row($('#jobs-table-row-' + job_id));
-            if(!json.success){
-              add_message(json.message);
-            }
-        });
-    });
+function bind_custom_action(action){
+  var job_id = $(action).data('job-id');
+  var label = $(action).text();
+  var callback = $(action).data('callback');
+  var confirm_message = $(action).data('confirm-message');
+  var do_action = function () {
+
+      var action_url = '/developer/gizmos/ajax/' + job_id + '/custom-action/' + callback;
+      $.ajax({
+          url: action_url
+      }).done(function (json) {
+          $(action).parent().html(status_html);
+          update_row($('#jobs-table-row-' + job_id));
+          if(!json.success){
+            add_message(json.message);
+          }
+      });
+    };
+
+
+  $(action).on('click', function(){
+    if(confirm_message){
+      $('#modal-dialog-jobs-table-confirm-content').html(confirm_message);
+      $('#tethys_jobs-table-confirm').html(label);
+      $('#tethys_jobs-table-confirm').off('click');
+      $('#tethys_jobs-table-confirm').on('click', function(){
+        do_action();
+        $('#modal-dialog-jobs-table-confirm').modal('hide');
+      });
+    }
+    else {
+      do_action();
+    }
+  });
 }
 
 function bind_run_action(action){
@@ -42,12 +64,6 @@ function bind_run_action(action){
         $.ajax({
             url: execute_url
         }).done(function (json) {
-            status_html =
-            '<div class="progress" style="margin-bottom: 0;">' +
-                '<div class="progress-bar progress-bar-warning progress-bar-striped active" role="progressbar" title="Submitted" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">' +
-                    '<span class="sr-only">100% Complete</span>' +
-                '</div>' +
-            '</div>'
             $(action).parent().html(status_html);
             update_row($('#jobs-table-row-' + job_id));
         });
@@ -61,12 +77,6 @@ function bind_refresh_action(action){
         $.ajax({
             url: execute_url
         }).done(function (json) {
-            status_html =
-            '<div class="progress" style="margin-bottom: 0;">' +
-                '<div class="progress-bar progress-bar-warning progress-bar-striped active" role="progressbar" title="Submitted" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">' +
-                    '<span class="sr-only">100% Complete</span>' +
-                '</div>' +
-            '</div>'
             $(action).parent().html(status_html);
             update_row($('#jobs-table-row-' + job_id));
         });
@@ -91,11 +101,7 @@ function bind_terminate_action(action){
                     update_row($('#jobs-table-row-' + job_id));
                 }
                 else{
-                    var alert_html = '<div class="alert alert-danger alert-dismissible" role="alert">' +
-                                        '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
-                                        '<strong>Error!</strong> Unable to terminate job ' + job_id + '.' +
-                                    '</div>';
-                    $('#jobs-table-messages').append(alert_html);
+                    add_message('Unable to terminate job ' + job_id + '.');
                 }
             });
          });
@@ -126,11 +132,7 @@ function bind_delete_action(action){
                     $('#bokeh-nodes-row-' + job_id).html('');
                 }
                 else{
-                    var alert_html = '<div class="alert alert-danger alert-dismissible" role="alert">' +
-                                        '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
-                                        '<strong>Error!</strong> Unable to delete job ' + job_id + '.' +
-                                    '</div>';
-                    $('#jobs-table-messages').append(alert_html);
+                    add_message('Unable to delete job ' + job_id + '.');
                 }
             });
          });
@@ -149,18 +151,12 @@ function bind_resubmit_action(action){
             update_workflow_nodes_row($(action).closest('tr').next('tr'));
             $("#jobs_table_overlay").addClass('hidden');
             if(json.success){
-                var alert_html = '<div class="alert alert-success alert-dismissible" role="alert">' +
-                                    '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
-                                    '<strong>Successfully resubmit job: ' + job_id + '.' +
-                                '</div>';
+                var alert_message = 'Successfully resubmit job: ' + job_id + '.';
             }
             else{
-                var alert_html = '<div class="alert alert-danger alert-dismissible" role="alert">' +
-                                    '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
-                                    '<strong>Error!</strong> Unable to resubmit job ' + job_id + '.' +
-                                '</div>';
+                var alert_message = 'Unable to resubmit job ' + job_id + '.';
             }
-            $('#jobs-table-messages').append(alert_html);
+            add_message(alert_message);
         });
     });
 }
@@ -393,7 +389,7 @@ function update_row(table_elem){
         monitor_url: monitor_url,
         results_url: results_url,
         actions: actions,
-        custom_actions: custom_actions
+        custom_actions: custom_actions,
     }
 
     $.ajax({
