@@ -390,7 +390,7 @@ function update_row(table_elem){
         results_url: results_url,
         actions: actions,
         custom_actions: custom_actions,
-    }
+    };
 
     $.ajax({
         method: 'POST',
@@ -604,9 +604,7 @@ $('.workflow-nodes-row').each(function(){
     update_workflow_nodes_row(this);
 });
 
-// Only show bokeh for the top row.
-var counter = 0;
-$('.bokeh-nodes-row').each(function(){
+// Only show bokeh for the top row.('.bokeh-nodes-row').each(function(){
     counter++;
     if (counter == 1) { bokeh_nodes_row(this);}
     else { return false;}
