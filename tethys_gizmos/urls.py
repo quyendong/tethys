@@ -22,6 +22,8 @@ ajax_urls = [
     url(r'^(?P<job_id>[\d.@+-]+)/log-content/(?P<key1>[\w+_-]+)(?:/(?P<key2>.*))?', jobs_table_views.get_log_content,
         name='log_content'),
     url(r'^(?P<job_id>[\d.@+-]+)/execute', jobs_table_views.execute, name='execute_job'),
+    url(r'^(?P<job_id>[\d.@+-]+)/pause', jobs_table_views.pause, name='pause_job'),
+    url(r'^(?P<job_id>[\d.@+-]+)/resume', jobs_table_views.resume, name='resume_job'),
     url(r'^(?P<job_id>[\d.@+-]+)/custom-action/(?P<action>[\w+-]+)', jobs_table_views.perform_action,
         name='custom_action'),
     url(r'^(?P<job_id>[\d.@+-]+)/update-row', jobs_table_views.update_row, name='update_job_row'),

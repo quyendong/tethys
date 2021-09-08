@@ -146,6 +146,11 @@ def jsonify(data):
 
 
 @register.filter
+def codify(data):
+    return data.replace(' ', '-')
+
+
+@register.filter
 def divide(value, divisor):
     """
     Divide value by divisor

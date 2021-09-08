@@ -46,9 +46,11 @@ def add_method(cls):
 
 
 class CustomJobAction:
-    def __init__(self, label, callback, enabled_callback=None, confirm_message=None, job_type=TethysJob):
+    def __init__(self, label, callback, enabled_callback=None, confirm_message=None,
+                 show_overlay=False, job_type=TethysJob):
         self.label = label
         self.confirm_message = confirm_message
+        self.show_overlay = show_overlay
         self.callback = self.register_callback(callback, job_type)
         if enabled_callback:
             self.register_callback(enabled_callback, job_type, self.get_enabled_callback_name(label))
@@ -57,7 +59,8 @@ class CustomJobAction:
     def properties(self):
         return {
             'callback': self.callback,
-            'confirm_message': self.confirm_message
+            'confirm_message': self.confirm_message,
+            'show_overlay': self.show_overlay,
         }
 
     @staticmethod
@@ -258,6 +261,8 @@ class JobsTable(TethysGizmoOptions):
             job_status = job.status
             job_actions = dict(
                 run=job_status == 'Pending',
+                pause=job_status in TethysJob.RUNNING_STATUSES,
+                resume=job_status == 'Paused',
                 resubmit=job_status in TethysJob.TERMINAL_STATUSES,
                 monitor=job_status in TethysJob.RUNNING_STATUSES,
                 results=job_status in TethysJob.TERMINAL_STATUSES,

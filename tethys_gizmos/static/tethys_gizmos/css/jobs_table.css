@@ -212,12 +212,13 @@ p.loading-error {
 }
 
 /* Status indicator */
-.status-indicator{
+.status-indicator, .status-info{
     border-radius: 50%;
     height: 12px;
     width: 12px;
     display: inline-block;
     margin-right: 5px;
+    color: #7f7f7f;
 }
 
 .status-Pending{
@@ -225,7 +226,7 @@ p.loading-error {
   color: white;
 }
 
-.status-Submitted{
+.status-Submitted, .status-Paused{
   background: #f0ad4e;
   color: #f0ad4e;
 }
@@ -250,15 +251,16 @@ p.loading-error {
   color: black;
 }
 
+.status-info.status-Pending{
+  border-radius: 50%;
+  background: black;
+}
+
 .status-info{
   background: white;
   margin-right: 5px;
   font-size: 14px;
   top: 2px;
-}
-.status-info.status-Pending{
-  border-radius: 50%;
-  background: black;
 }
 
 .status-Various-Complete{

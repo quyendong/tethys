@@ -9,6 +9,7 @@
 ********************************************************************************
 """
 import json
+from time import sleep
 from datetime import datetime
 from tethys_sdk.permissions import login_required
 from django.shortcuts import render, redirect
@@ -1594,6 +1595,11 @@ def cesium_map_view(request, type):
     return render(request, 'tethys_gizmos/gizmo_showcase/cesium_map_view.html', context)
 
 
+def custom_action(self):
+    sleep(2)
+    self.status = 'My Custom Status'
+
+
 def jobs_table_demo(request):
     jobs = TethysJob.objects.filter(label='gizmos_showcase').order_by('id').select_subclasses()
 
@@ -1608,10 +1614,20 @@ def jobs_table_demo(request):
         monitor_url='gizmos:results',
         results_url='gizmos:results',
         refresh_interval=10000,
-        run_btn=True,
-        delete_btn=True,
         show_detailed_status=True,
-        actions=['run', 'resubmit', 'log', 'monitor', 'results', 'terminate', 'delete'],
+        delay_loading_status=True,
+        actions=[
+            'run', 'resubmit', 'log', 'monitor', 'results', 'terminate', 'delete', 'pause', 'resume',
+            ('Custom Action', custom_action, lambda self: self.id % 2 == 0,
+             'Custom actions run user-defined custom code. '
+             'This custom action will sleep for 2 seconds and then return. </br></br>'
+             'Custom action can also have customized code to enable/disable the action '
+             '(e.g. this action is only enabled on even numbered jobs). </br></br>'
+             'Additionally, you can specify whether to show the loading overlay when the action is performed. '
+             'This action has the overlay enabled. </br></br>'
+             
+             'Are you sure you want to perform a custom action?', True),
+        ],
     )
 
     context = {'jobs_table': jobs_table_options}
