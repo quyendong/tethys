@@ -22,7 +22,7 @@ log = logging.getLogger('tethys.tethys_gizmos.gizmo_options.jobs_table')
 __all__ = ['JobsTable']
 
 
-JobsTableRow = namedtuple('JobsTableRow', ['columns', 'actions', 'custom_actions'])
+JobsTableRow = namedtuple('JobsTableRow', ['columns', 'actions'])
 
 
 def add_static_method(cls):
@@ -46,12 +46,20 @@ def add_method(cls):
 
 
 class CustomJobAction:
-    def __init__(self, label, callback, enabled_callback=None, confirm_message=None,
+    def __init__(self, label, callback_or_url, enabled_callback=None, confirm_message=None,
                  show_overlay=False, job_type=TethysJob):
         self.label = label
         self.confirm_message = confirm_message
         self.show_overlay = show_overlay
-        self.callback = self.register_callback(callback, job_type)
+        self.url = None
+        self.callback = None
+        if callback_or_url is None:
+            pass  # ensure that js is enabled
+        else:
+            if isinstance(callback_or_url, str) and (':' in callback_or_url or '/' in callback_or_url):
+                self.url = callback_or_url
+            else:
+                self.callback = self.register_callback(callback_or_url, job_type)
         if enabled_callback:
             self.register_callback(enabled_callback, job_type, self.get_enabled_callback_name(label))
 
@@ -59,6 +67,7 @@ class CustomJobAction:
     def properties(self):
         return {
             'callback': self.callback,
+            'url': self.url,
             'confirm_message': self.confirm_message,
             'show_overlay': self.show_overlay,
         }
@@ -78,6 +87,21 @@ class CustomJobAction:
     @staticmethod
     def get_enabled_callback_name(label):
         return f'custom_action_{label}_enabled'
+
+
+DEFAULT_ACTIONS_ARGS = dict(
+    run=['Run', 'execute', lambda job, job_status: job_status == 'Pending'],
+    pause=['Pause', 'pause', lambda job, job_status: job_status in TethysJob.RUNNING_STATUSES],
+    resume=['Resume', 'resume', lambda job, job_status: job_status == 'Paused'],
+    resubmit=['Resubmit', 'resubmit', lambda job, job_status: job_status in TethysJob.TERMINAL_STATUSES, '', True],
+    logs=['View Logs', None, lambda job, job_status: job_status not in TethysJob.PRE_RUNNING_STATUSES],
+    monitor=['Monitor Job', None, lambda job, job_status: job_status in TethysJob.RUNNING_STATUSES],
+    results=['View Results', None, lambda job, job_status: job_status in TethysJob.TERMINAL_STATUSES],
+    terminate=['Terminate', 'stop', lambda job, job_status: job_status in TethysJob.ACTIVE_STATUSES,
+               'Are you sure you want to terminate this job?', True],
+    delete=['Delete', 'delete', lambda job, job_status: job_status not in TethysJob.ACTIVE_STATUSES,
+            'Are you sure you want to permanently delete this job?', True],
+)
 
 
 class JobsTable(TethysGizmoOptions):
@@ -156,8 +180,6 @@ class JobsTable(TethysGizmoOptions):
 
         self.show_status = show_status
         self.show_actions = show_actions
-        self.monitor_url = monitor_url
-        self.results_url = results_url
         self.hover = hover
         self.striped = striped
         self.bordered = bordered
@@ -170,29 +192,60 @@ class JobsTable(TethysGizmoOptions):
         self.enable_data_table = enable_data_table
         self.data_table_options = data_table_options or {'ordering': True, 'searching': False, 'paging': False}
 
-        actions = actions or ['run', 'resubmit', 'logs', 'terminate', 'delete']
-        if monitor_url:
-            actions.append('monitor')
-        if results_url:
-            actions.append('results')
+        actions = actions or ['run', 'resubmit', '|', 'logs', 'monitor', 'results', '|', 'terminate', 'delete']
 
-        self.actions = dict(
-            run='run' in actions,
-            resubmit='resubmit' in actions,
-            logs='logs' in actions,
-            monitor='monitor' in actions and monitor_url,
-            results='results' in actions and monitor_url,
-            terminate='terminate' in actions,
-            delete='delete' in actions,
-        )
+        # TODO: this is backward compatibility code, remove at next major release
+        if '|' not in actions:
+            # revert to previous default order
+            actions.extend(['monitor', 'results'])
+            actions = set(actions)
+            ordered_actions = list()
+            prev_len = 0
+            for action_group in [
+                ['run', 'pause', 'resume', 'resubmit'],
+                ['logs', 'monitor', 'results'],
+                ['terminate', 'delete'],
+            ]:
+                for action in action_group:
+                    if action in actions:
+                        ordered_actions.append(action)
+                        actions.remove(action)
+                if len(ordered_actions) > prev_len:
+                    ordered_actions.append('|')
+                prev_len = len(ordered_actions)
+            ordered_actions.extend(actions)
+            actions = ordered_actions[:-1] if ordered_actions[-1] == '|' else ordered_actions
+        # end compatibility code
 
-        self.custom_actions = dict()
-        for action in actions:
-            if isinstance(action, tuple):
+        for action_name, url in (('monitor', monitor_url), ('results', results_url)):
+            if url:
+                args = DEFAULT_ACTIONS_ARGS[action_name]
+                args[1] = url
+                if action_name in actions:
+                    actions[actions.index(action_name)] = args
+                else:
+                    actions.append(args)
+            elif action_name in actions:
+                actions.remove(action_name)
+
+        self.actions = dict()
+
+        for i, action in enumerate(actions):
+            if action == '|':
+                self.actions[f'_sep_{i}'] = {'sep': i}
+                # the value dict (i.e. {'sep': i}) needs to have some value in it for the POST request to keep it
+                continue
+            if isinstance(action, str):
+                try:
+                    args = DEFAULT_ACTIONS_ARGS[action]
+                    action = CustomJobAction(*args)
+                except KeyError:
+                    raise ValueError(f'The action "{action}" is not a valid default action.')
+            if isinstance(action, tuple) or isinstance(action, list):
                 action = CustomJobAction(*action)
 
             if isinstance(action, CustomJobAction):
-                self.custom_actions[action.label] = action.properties
+                self.actions[action.label] = action.properties
 
         self.set_rows_and_columns(jobs, column_fields)
 
@@ -218,9 +271,13 @@ class JobsTable(TethysGizmoOptions):
             if isinstance(field, tuple):
                 column_name, field = field
             else:
-                column_name = field.title().replace('_', ' ')
+                column_name = field
+                if field.startswith('extended_properties'):
+                    column_name = field.split('.')[-1]
+                column_name = column_name.title().replace('_', ' ')
             try:
-                getattr(first_job, field)  # verify that the field name is a valid attribute on the job
+                if not field.startswith('extended_properties'):
+                    getattr(first_job, field)  # verify that the field name is a valid attribute on the job
                 self.column_names.append(column_name)
                 self.column_fields.append(field)
             except AttributeError:
@@ -228,53 +285,44 @@ class JobsTable(TethysGizmoOptions):
                             column_name, str(first_job), field)
 
         for job in sorted(jobs):
-            row_values = self.get_row(job, self.column_fields, deepcopy(self.custom_actions))
+            row_values = self.get_row(job, self.column_fields, deepcopy(self.actions))
             self.rows.append(row_values)
 
     @staticmethod
-    def get_row(job, job_attributes, custom_actions=None):
+    def get_row(job, job_attributes, actions=None):
         """Get the field values for one row (corresponding to one job).
 
         Args:
             job (TethysJob): An instance of a subclass of TethysJob
             job_attributes (list): a list of attribute names corresponding to the fields in the jobs table
-            custom_actions (dict): a dictionary of custom actions
+            actions (dict): a dictionary of custom actions
 
         Returns:
             A list of field values for one row.
 
         """
-        custom_actions = custom_actions or {}
+        job_actions = actions or {}
         row_values = list()
-        job_actions = dict()
+        extended_properties = job.extended_properties
         for attribute in job_attributes:
-            value = getattr(job, attribute)
-            # Truncate fractional seconds
-            if attribute == 'run_time':
-                value = str(value).split('.')[0]
             if attribute.startswith('extended_properties'):
-                extended_properties = job.extended_properties
                 attribute = attribute.split('.')[-1]
                 value = extended_properties.get(attribute, '')
+            else:
+                value = getattr(job, attribute)
+                # Truncate fractional seconds
+                if attribute == 'run_time':
+                    value = str(value).split('.')[0]
+
             row_values.append(value)
 
-            job_status = job.status
-            job_actions = dict(
-                run=job_status == 'Pending',
-                pause=job_status in TethysJob.RUNNING_STATUSES,
-                resume=job_status == 'Paused',
-                resubmit=job_status in TethysJob.TERMINAL_STATUSES,
-                monitor=job_status in TethysJob.RUNNING_STATUSES,
-                results=job_status in TethysJob.TERMINAL_STATUSES,
-                logs=job_status not in TethysJob.PRE_RUNNING_STATUSES,
-                terminate=job_status in TethysJob.ACTIVE_STATUSES,
-                delete=job_status not in TethysJob.ACTIVE_STATUSES,
-            )
+        job_status = job.status
 
-        for action, properties in custom_actions.items():
-            properties['enabled'] = getattr(job, CustomJobAction.get_enabled_callback_name(action), lambda: True)()
+        for action, properties in job_actions.items():
+            properties['enabled'] = getattr(
+                job, CustomJobAction.get_enabled_callback_name(action), lambda js: True)(job_status)
 
-        return JobsTableRow(row_values, actions=job_actions, custom_actions=custom_actions)
+        return JobsTableRow(row_values, actions=job_actions)
 
     @staticmethod
     def get_gizmo_css():

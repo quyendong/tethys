@@ -1606,7 +1606,7 @@ def jobs_table_demo(request):
     # Table View
     jobs_table_options = JobsTable(
         jobs=jobs,
-        column_fields=('id', 'name', 'description', 'creation_time'),
+        column_fields=('id', 'name', 'description', ('Created At', 'creation_time'), 'extended_properties.parity'),
         hover=True,
         striped=False,
         bordered=False,
@@ -1617,12 +1617,12 @@ def jobs_table_demo(request):
         show_detailed_status=True,
         delay_loading_status=True,
         actions=[
-            'run', 'resubmit', 'log', 'monitor', 'results', 'terminate', 'delete', 'pause', 'resume',
-            ('Custom Action', custom_action, lambda self: self.id % 2 == 0,
+            'run', 'pause', 'resume', 'resubmit', '|', 'logs', 'monitor', 'results', '|', 'terminate', 'delete', '|',
+            ('Custom Action', custom_action, lambda self, job_status: self.extended_properties['parity'] == 'even',
              'Custom actions run user-defined custom code. '
              'This custom action will sleep for 2 seconds and then return. </br></br>'
              'Custom action can also have customized code to enable/disable the action '
-             '(e.g. this action is only enabled on even numbered jobs). </br></br>'
+             '(e.g. this action is only enabled on jobs that have "even" as the extended property "parity"). </br></br>'
              'Additionally, you can specify whether to show the loading overlay when the action is performed. '
              'This action has the overlay enabled. </br></br>'
              
@@ -1649,6 +1649,7 @@ def create_sample_jobs(request):
             label='gizmos_showcase',
             status_message=status_msg,
             _status=status,
+            extended_properties={'parity': 'even' if job_id % 2 == 0 else 'odd'}
         )
         job.save()
 
@@ -1663,8 +1664,8 @@ def create_sample_jobs(request):
         create_job(i, desc, status)
         create_job(i + 10, desc, status, status_msg=f'{desc} status message')
 
-    create_job('20', 'Running multi-process job with various statuses', 'VAR')
-    create_job('21', 'Completed multi-process job with some errors', 'VCP')
-    create_job('22', 'Workflow job with multiple nodes.', 'VAR', workflow=True)
+    create_job(20, 'Running multi-process job with various statuses', 'VAR')
+    create_job(21, 'Completed multi-process job with some errors', 'VCP')
+    create_job(22, 'Workflow job with multiple nodes.', 'VAR', workflow=True)
 
     return redirect(reverse('gizmos:jobs_table') + '#jobs_table_docs')

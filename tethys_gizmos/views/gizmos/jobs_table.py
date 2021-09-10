@@ -25,22 +25,6 @@ def perform_action(request, job_id, action, success_message='', error_message=No
     return JsonResponse({'success': success, 'message': message})
 
 
-def execute(request, job_id):
-    return perform_action(request, job_id, 'execute')
-
-
-def pause(request, job_id):
-    return perform_action(request, job_id, 'pause')
-
-
-def resume(request, job_id):
-    return perform_action(request, job_id, 'resume')
-
-
-def terminate(request, job_id):
-    return perform_action(request, job_id, 'stop')
-
-
 def resubmit(request, job_id):
     return perform_action(request, job_id, 'resubmit', f'Successfully resubmitted job: {job_id}.')
 
@@ -130,8 +114,8 @@ def get_log_content(request, job_id, key1, key2=None):
 
 
 def update_row(request, job_id):
+    data = reconstruct_post_dict(request)
     try:
-        data = reconstruct_post_dict(request)
         job = TethysJob.objects.get_subclass(id=job_id)
         status = job.status
         status_msg = job.status_message
@@ -163,7 +147,7 @@ def update_row(request, job_id):
             if status == 'Results-Ready':
                 status = 'Running'
 
-        row = JobsTable.get_row(job, data['column_fields'], data.get('custom_actions'))
+        row = JobsTable.get_row(job, data['column_fields'], data.get('actions'))
         data.update({'job': job, 'row': row, 'job_status': status,
                      'job_statuses': statuses, 'delay_loading_status': False, 'error_message': status_msg})
         success = True

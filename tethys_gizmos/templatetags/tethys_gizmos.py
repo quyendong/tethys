@@ -147,7 +147,7 @@ def jsonify(data):
 
 @register.filter
 def codify(data):
-    return data.replace(' ', '-')
+    return data.lower().replace(' ', '-')
 
 
 @register.filter

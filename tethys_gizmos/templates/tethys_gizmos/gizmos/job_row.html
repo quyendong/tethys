@@ -57,63 +57,31 @@
         <span class="caret"></span>
       </button>
       <ul class="dropdown-menu dropdown-menu-right">
-        {% if actions.run %}
-          <li class="{% if not row.actions.run %}disabled{% endif %}"><a class='dropdown-item job-action-run' href="javascript:void(0)" data-job-id="{{ job.id }}" >Run</a></li>
-        {% endif %}
-        {% if actions.run %}
-          <li class="{% if not row.actions.pause %}disabled{% endif %}"><a class='dropdown-item job-action-pause' href="javascript:void(0)" data-job-id="{{ job.id }}" >Pause</a></li>
-        {% endif %}
-        {% if actions.run %}
-          <li class="{% if not row.actions.resume %}disabled{% endif %}"><a class='dropdown-item job-action-resume' href="javascript:void(0)" data-job-id="{{ job.id }}" >Resume</a></li>
-        {% endif %}
-        {% if actions.resubmit %}
-          <li class="{% if not row.actions.resubmit %}disabled{% endif %}"><a class='dropdown-item job-action-resubmit' href="javascript:void(0)" data-job-id="{{ job.id }}" >Resubmit</a></li>
-        {% endif %}
-        {% if actions.run or actions.pause or actions.resume or actions.resubmit %}
-          {% if actions.logs or actions.monitor or actions.results %}
+        {% for action, properties in row.actions.items %}
+          {% if action|slice:":5" == "_sep_" %}
             <li role="separator" class="divider"></li>
-          {% endif %}
-        {% endif %}
-        {% if actions.logs %}
-          <li class="{% if not row.actions.logs %}disabled{% endif %}"><a class="dropdown-item {% if row.actions.logs %}job-action-show-log" href="javascript:void(0)" data-job-id="{{ job.id }}" data-toggle="modal" data-target="#modal-dialog-jobs-table-show-log"{% else %}" href="#"{% endif %}>View Logs</a></li>
-        {% endif %}
-        {% if actions.monitor %}
-          <li class="{% if not row.actions.monitor %}disabled{% endif %}"><a class='dropdown-item' href="{% if row.actions.monitor %}{% url monitor_url job_id=job.id %}{% else %}#{% endif %}">Monitor Job</a></li>
-        {% endif %}
-        {% if actions.results %}
-          <li class="{% if not row.actions.results %}disabled{% endif %}"><a class='dropdown-item' href="{% if row.actions.results %}{% url results_url job_id=job.id %}{% else %}#{% endif %}">View Results</a></li>
-        {% endif %}
-        {% if actions.delete or actions.terminate %}
-          <li role="separator" class="divider"></li>
-        {% endif %}
-        {% if actions.terminate %}
-          <li class="{% if not row.actions.terminate %}disabled{% endif %}"><a class="dropdown-item job-action-terminate" {% if row.actions.terminate %}href="javascript:void(0)" data-job-id="{{ job.id }}" data-toggle="modal" data-target="#modal-dialog-jobs-table-confirm"{% else %}href="#"{% endif %}>Terminate</a></li>
-        {% endif %}
-        {% if actions.delete %}
-          <li class="{% if not row.actions.delete %}disabled{% endif %}"><a class="dropdown-item job-action-delete" {% if row.actions.delete %}href="javascript:void(0)" data-job-id="{{ job.id }}" data-toggle="modal" data-target="#modal-dialog-jobs-table-confirm"{% else %}href="#"{% endif %}>Delete</a></li>
-        {% endif %}
-        {% if row.custom_actions %}
-          <li role="separator" class="divider"></li>
-          {% for action, properties in row.custom_actions.items %}
-          <li class="{% if not properties.enabled %}disabled{% endif %}">
-            <a class="dropdown-item job-action-custom"
-              {% if properties.enabled %}
-                href="javascript:void(0)"
-                {% if properties.modal_options or properties.confirm_message %}
-                  data-toggle="modal"
-                  data-target="#modal-dialog-jobs-table-confirm"
-                  data-confirm-message="{{ properties.confirm_message }}"
+          {% else %}
+            <li class="{% if not properties.enabled %}disabled{% endif %}">
+              <a class="dropdown-item job-action job-action-{{ action|codify }}"
+                {% if properties.enabled %}
+                  href="{% if properties.url %}{% url properties.url job_id=job.id %}{% else %}javascript:void(0){% endif %}"
+                  {% if properties.modal_options or properties.confirm_message %}
+                    data-toggle="modal"
+                    data-target="#modal-dialog-jobs-table-confirm"
+                    data-confirm-message="{{ properties.confirm_message }}"
+                  {% endif %}
+                {% else %}
+                  href="#"
                 {% endif %}
-              {% else %}
-                href="#"
-              {% endif %}
-                data-job-id="{{ job.id }}"
-                data-callback="{{ properties.callback }}"
-                data-show-overlay="{{ properties.show_overlay|jsonify }}"
-            >{{ action }}</a>
-          </li>
-          {% endfor %}
-        {% endif %}
+                {% if properties.callback %}
+                  data-callback="{{ properties.callback }}"
+                {% endif %}
+                  data-job-id="{{ job.id }}"
+                  data-show-overlay="{{ properties.show_overlay|jsonify }}"
+              >{{ action }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
       </ul>
     </div>
   </td>
