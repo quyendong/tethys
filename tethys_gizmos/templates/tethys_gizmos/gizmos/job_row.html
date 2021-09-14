@@ -70,6 +70,10 @@
                     data-target="#modal-dialog-jobs-table-confirm"
                     data-confirm-message="{{ properties.confirm_message }}"
                   {% endif %}
+                  {% if action == 'View Logs' %}
+                    data-toggle="modal"
+                    data-target="#modal-dialog-jobs-table-show-log"
+                  {% endif %}
                 {% else %}
                   href="#"
                 {% endif %}
