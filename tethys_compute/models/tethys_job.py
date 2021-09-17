@@ -144,7 +144,8 @@ class TethysJob(models.Model):
                 else:
                     self.extended_properties[self.OTHER_STATUS_KEY] = status
                     status = 'OTH'
-
+            if status != 'OTH':
+                self.extended_properties.pop(self.OTHER_STATUS_KEY, None)
             self._status = status
             self.save()
 
@@ -207,8 +208,8 @@ class TethysJob(models.Model):
         self.save()
         log.debug('Finished processing results for job: {}'.format(self))
 
-    def resubmit(self):
-        self._resubmit()
+    def resubmit(self, *args, **kwargs):
+        self._resubmit(*args, **kwargs)
 
     def get_logs(self):
         return self._get_logs()

@@ -241,6 +241,9 @@
     {% block modals %}
     {% endblock %}
     {% endblock %}
+    {% block gizmo_modals%}
+      {% gizmo_dependencies modals %}
+    {% endblock %}
 
     {% block terms-of-service-override %}
       {% show_terms_if_not_agreed %}
