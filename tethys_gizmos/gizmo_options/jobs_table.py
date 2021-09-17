@@ -306,8 +306,12 @@ class JobsTable(TethysGizmoOptions):
         extended_properties = job.extended_properties
         for attribute in job_attributes:
             if attribute.startswith('extended_properties'):
-                attribute = attribute.split('.')[-1]
-                value = extended_properties.get(attribute, '')
+                parts = attribute.split('.')
+                keys = parts[1:-1]
+                cur_dict = extended_properties
+                for key in keys:
+                    cur_dict = cur_dict.get(key, {})
+                value = cur_dict.get(parts[-1], '')
             else:
                 value = getattr(job, attribute)
                 # Truncate fractional seconds
