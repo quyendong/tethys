@@ -57,7 +57,7 @@ class CustomJobAction:
         if callback_or_url is None:
             pass
         elif modal_url is None and callback_or_url is None:
-            raise ValueError(f'There is not a callback url or modal url.')
+            raise ValueError('There is not a callback url or modal url.')
         else:
             if isinstance(callback_or_url, str) and (':' in callback_or_url or '/' in callback_or_url):
                 self.url = callback_or_url
