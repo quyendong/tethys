@@ -10,7 +10,6 @@ from tethys_sdk.gizmos import SelectInput
 
 log = logging.getLogger('tethys.tethys_gizmos.views.jobs_table')
 
-
 def perform_action(request, job_id, action, success_message='', error_message=None):
     try:
         job = TethysJob.objects.get_subclass(id=job_id)

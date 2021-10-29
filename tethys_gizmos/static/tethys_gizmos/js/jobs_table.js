@@ -31,6 +31,7 @@ function bind_action(action, on_success=()=>{}){
   var label = $(action).text();
   var show_overlay = $(action).data('show-overlay');
   var confirm_message = $(action).data('confirm-message');
+  var modal_url = $(action).data('modal-url');
   var callback = $(action).data('callback');
   var url = '/developer/gizmos/ajax/' + job_id + '/action/' + callback;
 
@@ -65,7 +66,7 @@ function bind_action(action, on_success=()=>{}){
           $('#modal-dialog-jobs-table-confirm').modal('hide');
         });
       }
-      else {
+      else{
         do_action();
       }
     });
@@ -188,7 +189,6 @@ function display_log_content(log_content_id) {
     //Display the selected log
     $('#' + log_content_id).show();
 }
-
 
 function render_workflow_nodes_graph(dag, target_selector) {
     // Create new graph with left-right orientation.
@@ -330,6 +330,18 @@ function update_row(table_elem){
     }
 }
 
+function bind_modal_url(action){
+  var job_id = $(action).data('job-id');
+  var modal_url = $(action).data('modal-url');
+    $(action).on('click', function(){
+    $.ajax({
+        url: modal_url,
+    }).done(function(response){
+       $('#modal-dialog-jobs-table-modal-content').html(response)
+      })
+  });
+}
+
 function bind_jobs_table_actions(table_elem){
   $(table_elem).find('.job-action').each(function(){
     var action = $(this);
@@ -347,6 +359,9 @@ function bind_jobs_table_actions(table_elem){
     }
     else if(action.hasClass('job-action-view-logs')){
       bind_show_log_action(action);
+    }
+    else if(action.data('modal-url')){
+      bind_modal_url(action);
     }
     else{
       bind_action(action);

@@ -65,11 +65,15 @@
               <a class="dropdown-item job-action job-action-{{ action|codify }}"
                 {% if properties.enabled %}
                   href="{% if properties.url %}{% url properties.url job_id=job.id %}{% else %}javascript:void(0){% endif %}"
-                  {% if properties.modal_options or properties.confirm_message %}
-                    data-toggle="modal"
-                    data-target="#modal-dialog-jobs-table-confirm"
-                    data-confirm-message="{{ properties.confirm_message }}"
-                  {% endif %}
+                 {% if properties.modal_url %}
+                      data-toggle="modal"
+                      data-target="#modal-dialog-jobs-table-modal"
+                      data-modal-url ="{% url properties.modal_url job_id=job.id %}"
+                    {% elif properties.confirm_message %}
+                      data-toggle="modal"
+                      data-target="#modal-dialog-jobs-table-confirm"
+                      data-confirm-message="{{ properties.confirm_message }}"
+                    {% endif %}
                   {% if action == 'View Logs' %}
                     data-toggle="modal"
                     data-target="#modal-dialog-jobs-table-show-log"

@@ -44,17 +44,20 @@ def add_method(cls):
         return func
     return outer
 
-
 class CustomJobAction:
-    def __init__(self, label, callback_or_url, enabled_callback=None, confirm_message=None,
-                 show_overlay=False, job_type=TethysJob):
+    def __init__(self, label, callback_or_url=None, enabled_callback=None, confirm_message=None,
+                 show_overlay=False, modal_url=None, job_type=TethysJob):
         self.label = label
         self.confirm_message = confirm_message
         self.show_overlay = show_overlay
+        self.modal_url = modal_url
         self.url = None
         self.callback = None
+
         if callback_or_url is None:
-            pass  # ensure that js is enabled
+            pass
+        elif modal_url is None and callback_or_url is None:
+            raise ValueError(f'There is not a callback url or modal url.')
         else:
             if isinstance(callback_or_url, str) and (':' in callback_or_url or '/' in callback_or_url):
                 self.url = callback_or_url
@@ -68,6 +71,7 @@ class CustomJobAction:
         return {
             'callback': self.callback,
             'url': self.url,
+            'modal_url': self.modal_url,
             'confirm_message': self.confirm_message,
             'show_overlay': self.show_overlay,
         }
@@ -361,7 +365,7 @@ class JobsTable(TethysGizmoOptions):
             jobs_table_modals,
         )
 
-
+# HTML code to be read
 jobs_table_modals = '''
 <!-- Jobs Table: Loading Overlay -->
 <div id="jobs_table_overlay" class="hidden">
@@ -414,6 +418,20 @@ jobs_table_modals = '''
         <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
         <button type="button" class="btn btn-danger" id="tethys_jobs-table-confirm" value="">Yes</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Jobs Table: Custom Modal -->
+<div id="modal-dialog-jobs-table-modal" title="Modal_option" class="modal" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5>Resubmit Options</h5>
+        </div>
+        <div class="modal-body">
+            <div id="modal-dialog-jobs-table-modal-content"></div>
+        </div>
     </div>
   </div>
 </div>
