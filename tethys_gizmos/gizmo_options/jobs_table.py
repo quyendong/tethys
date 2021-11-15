@@ -426,9 +426,6 @@ jobs_table_modals = '''
 <div id="modal-dialog-jobs-table-modal" title="Modal_option" class="modal" role="dialog">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
-        <div class="modal-header">
-            <h5>Resubmit Options</h5>
-        </div>
         <div class="modal-body">
             <div id="modal-dialog-jobs-table-modal-content"></div>
         </div>
